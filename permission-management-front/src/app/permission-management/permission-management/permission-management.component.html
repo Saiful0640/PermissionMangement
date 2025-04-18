@@ -1,0 +1,71 @@
+<div class="p-4">
+  <h1 class="text-2xl font-bold mb-4">Permission Management</h1>
+
+  <div *ngIf="errorMessage" class="mb-4 p-4 bg-red-100 text-red-700 border border-red-300 rounded">
+    {{ errorMessage }}
+  </div>
+
+  <div class="flex space-x-4 mb-4">
+    <mat-form-field>
+      <mat-label>Department</mat-label>
+      <mat-select [(ngModel)]="selectedDepartmentId" (ngModelChange)="fetchPermissions()">
+        <mat-option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Designation</mat-label>
+      <mat-select [(ngModel)]="selectedDesignationId" (ngModelChange)="fetchPermissions()">
+        <mat-option *ngFor="let des of designations" [value]="des.id">{{ des.name }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <mat-table [dataSource]="permissions" class="mat-elevation-z8">
+    <ng-container matColumnDef="id">
+      <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
+      <mat-cell *matCellDef="let permission">{{ permission.id }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="menuName">
+      <mat-header-cell *matHeaderCellDef>Menu Name</mat-header-cell>
+      <mat-cell *matCellDef="let permission">{{ permission.menuName || 'null' }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="subMenu">
+      <mat-header-cell *matHeaderCellDef>Sub Menu</mat-header-cell>
+      <mat-cell *matCellDef="let permission">{{ permission.subMenu }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="link">
+      <mat-header-cell *matHeaderCellDef>Link</mat-header-cell>
+      <mat-cell *matCellDef="let permission">{{ permission.link }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="status">
+      <mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
+      <mat-cell *matCellDef="let permission">{{ permission.status }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="canView">
+      <mat-header-cell *matHeaderCellDef>View</mat-header-cell>
+      <mat-cell *matCellDef="let permission">
+        <mat-checkbox [(ngModel)]="permission.canView" (ngModelChange)="updatePermission(permission)"></mat-checkbox>
+      </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="canCreate">
+      <mat-header-cell *matHeaderCellDef>Create</mat-header-cell>
+      <mat-cell *matCellDef="let permission">
+        <mat-checkbox [(ngModel)]="permission.canCreate" (ngModelChange)="updatePermission(permission)"></mat-checkbox>
+      </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="canEdit">
+      <mat-header-cell *matHeaderCellDef>Edit</mat-header-cell>
+      <mat-cell *matCellDef="let permission">
+        <mat-checkbox [(ngModel)]="permission.canEdit" (ngModelChange)="updatePermission(permission)"></mat-checkbox>
+      </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="canDelete">
+      <mat-header-cell *matHeaderCellDef>Delete</mat-header-cell>
+      <mat-cell *matCellDef="let permission">
+        <mat-checkbox [(ngModel)]="permission.canDelete" (ngModelChange)="updatePermission(permission)"></mat-checkbox>
+      </mat-cell>
+    </ng-container>
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+  </mat-table>
+</div>

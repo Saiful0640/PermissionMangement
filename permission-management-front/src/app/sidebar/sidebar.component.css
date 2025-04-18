@@ -1,0 +1,12 @@
+mat-sidenav {
+    padding-top: 20px;
+  }
+  
+  mat-nav-list a {
+    color: white;
+    padding: 10px;
+  }
+  
+  mat-nav-list a:hover {
+    background-color: #555;
+  }
