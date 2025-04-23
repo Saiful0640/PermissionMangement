@@ -52,7 +52,7 @@ export class LoginComponent {
           departmentId: response.departmentId,
           designationId: response.designationId
         }));
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/admin/dashboard']);
       },
       error: (err) => {
         console.error('Login error:', err);

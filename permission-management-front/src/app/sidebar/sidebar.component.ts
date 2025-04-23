@@ -16,6 +16,7 @@ interface Menu {
 interface MenuGroup {
   menuName: string | null;
   items: Menu[];
+  subMenus: { link: string; subMenu: string }[];
 }
 
 @Component({
@@ -58,7 +59,8 @@ export class SidebarComponent implements OnInit {
         // Convert grouped object to array of MenuGroup
         this.menuGroups = Object.keys(grouped).map(key => ({
           menuName: key === 'top-level' ? null : key,
-          items: grouped[key]
+          items: grouped[key],
+          subMenus: grouped[key].map(menu => ({ link: menu.link, subMenu: menu.subMenu }))
         }));
         console.log('Menu groups:', this.menuGroups);
       },

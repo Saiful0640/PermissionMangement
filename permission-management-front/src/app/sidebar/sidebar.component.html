@@ -1,21 +1,21 @@
-<mat-sidenav-container>
-  <mat-sidenav mode="side" opened>
-    <mat-nav-list>
-      <ng-container *ngFor="let group of menuGroups">
-        <!-- Top-level menus (menuName is null) -->
-        <ng-container *ngIf="!group.menuName; else subMenuGroup">
-          <ng-container *ngFor="let menu of group.items">
-            <a mat-list-item [routerLink]="menu.link">{{ menu.subMenu | titlecase }}</a>
-          </ng-container>
-        </ng-container>
-        <!-- Sub-menus (menuName is not null, e.g., 'attendance') -->
-        <ng-template #subMenuGroup>
-          <mat-list-item>{{ group.menuName | titlecase }}</mat-list-item>
-          <ng-container *ngFor="let menu of group.items">
-            <a mat-list-item [routerLink]="menu.link" style="padding-left: 20px;">{{ menu.subMenu | titlecase }}</a>
-          </ng-container>
-        </ng-template>
+
+
+
+
+<mat-nav-list>
+  <ng-container *ngFor="let group of menuGroups">
+    <!-- Top-level menus (menuName is null) -->
+    <ng-container *ngIf="!group.menuName; else subMenuGroup">
+      <ng-container *ngFor="let menu of group.subMenus">
+        <a mat-list-item [routerLink]="menu.link">{{ menu.subMenu | titlecase }}</a>
       </ng-container>
-    </mat-nav-list>
-  </mat-sidenav>
-</mat-sidenav-container>
+    </ng-container>
+    <!-- Sub-menus (menuName is not null, e.g., 'attendance') -->
+    <ng-template #subMenuGroup>
+      <mat-list-item>{{ group.menuName | titlecase }}</mat-list-item>
+      <ng-container *ngFor="let menu of group.subMenus">
+        <a mat-list-item [routerLink]="menu.link" style="padding-left: 20px;">{{ menu.subMenu | titlecase }}</a>
+      </ng-container>
+    </ng-template>
+  </ng-container>
+</mat-nav-list>

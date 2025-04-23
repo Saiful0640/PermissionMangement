@@ -1,16 +1,23 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './login/login.component';
-import { PermissionManagementComponent } from './permission-management/permission-management/permission-management.component';
-import { UserManagementComponent } from './user-management/user-management.component';
-import { DepartmentDesignationComponent } from './department-designation/department-designation.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { CalendarComponent } from './calendar/calendar.component';
+
+import { TimeHistoryComponent } from './attendance/time-history/time-history.component';
 import { authGuard } from './auth.guard';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
-  { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
-  { path: 'permissions', component: PermissionManagementComponent, canActivate: [authGuard] },
-  { path: 'users', component: UserManagementComponent, canActivate: [authGuard] },
-  { path: 'departments-designations', component: DepartmentDesignationComponent, canActivate: [authGuard] },
-  { path: '', redirectTo: '/login', pathMatch: 'full' }
+  {
+    path: 'admin',
+    canActivate: [authGuard],
+    children: [
+      { path: 'dashboard', component: DashboardComponent },
+      { path: 'calendar', component: CalendarComponent },
+      { path: 'attendance/time_history', component: TimeHistoryComponent },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+    ]
+  },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'dashboard', redirectTo: 'admin/dashboard', pathMatch: 'full' }
 ];
