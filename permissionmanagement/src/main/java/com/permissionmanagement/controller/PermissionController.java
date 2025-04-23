@@ -24,6 +24,8 @@ class PermissionController {
 
     @Autowired
     private PermissionService permissionService;
+    @Autowired
+    private PermissionRepository permissionRepository;
 
     @GetMapping
     public ResponseEntity<List<PermissionDTO>> getPermissions(
@@ -50,5 +52,18 @@ class PermissionController {
             logger.error("Error updating permission", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
+    }
+    @PostMapping
+    public ResponseEntity<Permission> addPermission(@RequestBody Permission permission) {
+        Permission savedPermission = permissionRepository.save(permission);
+        return ResponseEntity.ok(savedPermission);
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePermission(@PathVariable Long id) {
+        if (!permissionRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        permissionRepository.deleteById(id);
+        return ResponseEntity.ok().build();
     }
 }

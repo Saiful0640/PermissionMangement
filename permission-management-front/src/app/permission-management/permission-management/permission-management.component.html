@@ -18,54 +18,71 @@
         <mat-option *ngFor="let des of designations" [value]="des.id">{{ des.name }}</mat-option>
       </mat-select>
     </mat-form-field>
+    <mat-form-field>
+      <mat-label>Filter</mat-label>
+      <input matInput (keyup)="applyFilter($event)" placeholder="Type to filter...">
+    </mat-form-field>
+    <button mat-raised-button color="primary" (click)="openAddDialog()">Add Permission</button>
   </div>
 
-  <mat-table [dataSource]="permissions" class="mat-elevation-z8">
+  <mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
     <ng-container matColumnDef="id">
-      <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>ID</mat-header-cell>
       <mat-cell *matCellDef="let permission">{{ permission.id }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="menuName">
-      <mat-header-cell *matHeaderCellDef>Menu Name</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>Menu Name</mat-header-cell>
       <mat-cell *matCellDef="let permission">{{ permission.menuName || 'null' }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="subMenu">
-      <mat-header-cell *matHeaderCellDef>Sub Menu</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>Sub Menu</mat-header-cell>
       <mat-cell *matCellDef="let permission">{{ permission.subMenu }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="link">
-      <mat-header-cell *matHeaderCellDef>Link</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>Link</mat-header-cell>
       <mat-cell *matCellDef="let permission">{{ permission.link }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="status">
-      <mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>Status</mat-header-cell>
       <mat-cell *matCellDef="let permission">{{ permission.status }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="canView">
-      <mat-header-cell *matHeaderCellDef>View</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>View</mat-header-cell>
       <mat-cell *matCellDef="let permission">
         <mat-checkbox [(ngModel)]="permission.canView" (ngModelChange)="updatePermission(permission)"></mat-checkbox>
       </mat-cell>
     </ng-container>
     <ng-container matColumnDef="canCreate">
-      <mat-header-cell *matHeaderCellDef>Create</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>Create</mat-header-cell>
       <mat-cell *matCellDef="let permission">
         <mat-checkbox [(ngModel)]="permission.canCreate" (ngModelChange)="updatePermission(permission)"></mat-checkbox>
       </mat-cell>
     </ng-container>
     <ng-container matColumnDef="canEdit">
-      <mat-header-cell *matHeaderCellDef>Edit</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>Edit</mat-header-cell>
       <mat-cell *matCellDef="let permission">
         <mat-checkbox [(ngModel)]="permission.canEdit" (ngModelChange)="updatePermission(permission)"></mat-checkbox>
       </mat-cell>
     </ng-container>
     <ng-container matColumnDef="canDelete">
-      <mat-header-cell *matHeaderCellDef>Delete</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef mat-sort-header>Delete</mat-header-cell>
       <mat-cell *matCellDef="let permission">
         <mat-checkbox [(ngModel)]="permission.canDelete" (ngModelChange)="updatePermission(permission)"></mat-checkbox>
+      </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="actions">
+      <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+      <mat-cell *matCellDef="let permission">
+        <button mat-icon-button (click)="openEditDialog(permission)">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="deletePermission(permission)">
+          <mat-icon>delete</mat-icon>
+        </button>
       </mat-cell>
     </ng-container>
     <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
     <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
   </mat-table>
+  <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
 </div>
