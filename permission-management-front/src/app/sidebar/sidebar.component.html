@@ -1,11 +1,21 @@
 <mat-sidenav-container>
-    <mat-sidenav mode="side" opened class="w-64 bg-gray-800 text-white">
-      <mat-nav-list>
-        <a mat-list-item routerLink="/dashboard">Dashboard</a>
-        <a mat-list-item *ngFor="let menu of menus" [routerLink]="menu.link">{{ menu.subMenu }}</a>
-      </mat-nav-list>
-    </mat-sidenav>
-    <mat-sidenav-content>
-      <router-outlet></router-outlet>
-    </mat-sidenav-content>
-  </mat-sidenav-container>
+  <mat-sidenav mode="side" opened>
+    <mat-nav-list>
+      <ng-container *ngFor="let group of menuGroups">
+        <!-- Top-level menus (menuName is null) -->
+        <ng-container *ngIf="!group.menuName; else subMenuGroup">
+          <ng-container *ngFor="let menu of group.items">
+            <a mat-list-item [routerLink]="menu.link">{{ menu.subMenu | titlecase }}</a>
+          </ng-container>
+        </ng-container>
+        <!-- Sub-menus (menuName is not null, e.g., 'attendance') -->
+        <ng-template #subMenuGroup>
+          <mat-list-item>{{ group.menuName | titlecase }}</mat-list-item>
+          <ng-container *ngFor="let menu of group.items">
+            <a mat-list-item [routerLink]="menu.link" style="padding-left: 20px;">{{ menu.subMenu | titlecase }}</a>
+          </ng-container>
+        </ng-template>
+      </ng-container>
+    </mat-nav-list>
+  </mat-sidenav>
+</mat-sidenav-container>

@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/api/permissions")
+@RequestMapping("/api/permission")
 @CrossOrigin(origins = "http://localhost:4200")
 class PermissionController {
     private static final Logger logger = LoggerFactory.getLogger(PermissionController.class);

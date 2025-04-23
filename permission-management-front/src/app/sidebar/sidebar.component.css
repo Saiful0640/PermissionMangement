@@ -1,12 +1,21 @@
+mat-sidenav-container {
+  height: 100vh;
+}
+
 mat-sidenav {
-    padding-top: 20px;
-  }
-  
-  mat-nav-list a {
-    color: white;
-    padding: 10px;
-  }
-  
-  mat-nav-list a:hover {
-    background-color: #555;
-  }
+  width: 200px;
+  background-color: #f4f4f4;
+}
+
+mat-nav-list a {
+  color: #333;
+  text-decoration: none;
+}
+
+mat-nav-list a:hover {
+  background-color: #e0e0e0;
+}
+
+mat-list-item {
+  font-weight: bold;
+}

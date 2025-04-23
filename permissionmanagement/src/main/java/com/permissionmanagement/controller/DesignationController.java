@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/designations")
+@RequestMapping("/api/designation")
 @CrossOrigin(origins = "http://localhost:4200")
 class DesignationController {
     @Autowired

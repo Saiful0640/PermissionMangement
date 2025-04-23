@@ -69,7 +69,7 @@ export class PermissionManagementComponent implements OnInit {
   }
 
   loadDepartments() {
-    this.http.get<Department[]>('http://localhost:8080/api/departments').subscribe({
+    this.http.get<Department[]>('http://localhost:8080/api/department').subscribe({
       next: (data) => {
         this.departments = data;
         if (data.length > 0) {
@@ -85,7 +85,7 @@ export class PermissionManagementComponent implements OnInit {
   }
 
   loadDesignations() {
-    this.http.get<Designation[]>('http://localhost:8080/api/designations').subscribe({
+    this.http.get<Designation[]>('http://localhost:8080/api/designation').subscribe({
       next: (data) => {
         this.designations = data;
         if (data.length > 0) {
@@ -102,7 +102,7 @@ export class PermissionManagementComponent implements OnInit {
 
   fetchPermissions() {
     if (!this.selectedDepartmentId || !this.selectedDesignationId) return;
-    const url = `http://localhost:8080/api/permissions?departmentId=${this.selectedDepartmentId}&designationId=${this.selectedDesignationId}`;
+    const url = `http://localhost:8080/api/permission?departmentId=${this.selectedDepartmentId}&designationId=${this.selectedDesignationId}`;
     this.http.get<Permission[]>(url).subscribe({
       next: (data) => {
         this.permissions = data;
@@ -116,7 +116,7 @@ export class PermissionManagementComponent implements OnInit {
   }
 
   updatePermission(permission: Permission) {
-    this.http.put(`http://localhost:8080/api/permissions/${permission.id}`, permission).subscribe({
+    this.http.put(`http://localhost:8080/api/permission/${permission.id}`, permission).subscribe({
       next: () => console.log('Permission updated'),
       error: (err) => {
         this.errorMessage = 'Failed to update permission';

@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 
@@ -22,8 +23,10 @@ interface LoginResponse {
     CommonModule,
     FormsModule,
     MatInputModule,
+    MatFormFieldModule,
     MatButtonModule,
-    MatCardModule
+    MatCardModule,
+    RouterModule,
   ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
@@ -33,7 +36,7 @@ export class LoginComponent {
   password = '';
   errorMessage: string | null = null;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router:Router) {}
 
   login() {
     this.errorMessage = null;

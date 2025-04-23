@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 
 
 @Entity
+
 public class Permission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
