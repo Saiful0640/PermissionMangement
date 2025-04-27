@@ -2,8 +2,6 @@ package com.permissionmanagement.auth;
 
 import com.permissionmanagement.Model.User;
 import com.permissionmanagement.repository.UserRepository;
-import com.permissionmanagement.service.Iservice.IUserService;
-import com.permissionmanagement.service.UserService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;

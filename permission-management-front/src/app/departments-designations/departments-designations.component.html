@@ -1,0 +1,69 @@
+<div class="p-4">
+    <h1 class="text-2xl font-bold mb-4">Departments & Designations</h1>
+  
+    <h2 class="text-xl font-semibold mb-2">Departments</h2>
+    <div class="flex space-x-4 mb-4">
+      <mat-form-field>
+        <mat-label>Filter Departments</mat-label>
+        <input matInput (keyup)="applyDepartmentFilter($event)" placeholder="Type to filter...">
+      </mat-form-field>
+      <button mat-raised-button color="primary" (click)="openAddDepartmentDialog()">Add Department</button>
+    </div>
+    <mat-table [dataSource]="departmentDataSource" matSort class="mat-elevation-z8 mb-8">
+      <ng-container matColumnDef="id">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>ID</mat-header-cell>
+        <mat-cell *matCellDef="let department">{{ department.id }}</mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="name">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Name</mat-header-cell>
+        <mat-cell *matCellDef="let department">{{ department.name }}</mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="actions">
+        <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+        <mat-cell *matCellDef="let department">
+          <button mat-icon-button (click)="openEditDepartmentDialog(department)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="deleteDepartment(department)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </mat-cell>
+      </ng-container>
+      <mat-header-row *matHeaderRowDef="departmentColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: departmentColumns;"></mat-row>
+    </mat-table>
+    <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+  
+    <h2 class="text-xl font-semibold mb-2">Designations</h2>
+    <div class="flex space-x-4 mb-4">
+      <mat-form-field>
+        <mat-label>Filter Designations</mat-label>
+        <input matInput (keyup)="applyDesignationFilter($event)" placeholder="Type to filter...">
+      </mat-form-field>
+      <button mat-raised-button color="primary" (click)="openAddDesignationDialog()">Add Designation</button>
+    </div>
+    <mat-table [dataSource]="designationDataSource" matSort class="mat-elevation-z8">
+      <ng-container matColumnDef="id">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>ID</mat-header-cell>
+        <mat-cell *matCellDef="let designation">{{ designation.id }}</mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="name">
+        <mat-header-cell *matHeaderCellDef mat-sort-header>Name</mat-header-cell>
+        <mat-cell *matCellDef="let designation">{{ designation.name }}</mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="actions">
+        <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+        <mat-cell *matCellDef="let designation">
+          <button mat-icon-button (click)="openEditDesignationDialog(designation)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="deleteDesignation(designation)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </mat-cell>
+      </ng-container>
+      <mat-header-row *matHeaderRowDef="designationColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: designationColumns;"></mat-row>
+    </mat-table>
+    <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+  </div>
