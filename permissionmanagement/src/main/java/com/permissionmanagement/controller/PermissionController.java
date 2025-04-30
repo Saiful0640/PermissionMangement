@@ -1,6 +1,7 @@
 package com.permissionmanagement.controller;
 
 import com.permissionmanagement.DTO.PermissionDTO;
+import com.permissionmanagement.Model.Menu;
 import com.permissionmanagement.repository.PermissionRepository;
 import com.permissionmanagement.service.PermissionService;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import com.permissionmanagement.util.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,6 +43,7 @@ class PermissionController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<Permission> updatePermission(@PathVariable Long id, @RequestBody PermissionDTO dto) {

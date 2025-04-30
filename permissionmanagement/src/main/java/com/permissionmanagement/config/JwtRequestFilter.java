@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 
+
+
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
@@ -52,7 +54,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
-            logger.info("Received JWT token: {}", jwt); // Log the token
+            logger.info("Received JWT token: {}", jwt);
             try {
                 username = Jwts.parserBuilder()
                         .setSigningKey(jwtSecret)
@@ -61,20 +63,31 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                         .getBody()
                         .getSubject();
                 logger.info("Extracted username from JWT: {}", username);
+            } catch (io.jsonwebtoken.ExpiredJwtException e) {
+                logger.error("JWT token expired: {}", e.getMessage());
+            } catch (io.jsonwebtoken.SignatureException e) {
+                logger.error("Invalid JWT signature: {}", e.getMessage());
             } catch (Exception e) {
                 logger.error("JWT parsing error: {}", e.getMessage(), e);
             }
         } else {
-            logger.info("No Authorization header or invalid format: {}", authorizationHeader);
+            logger.info("No Authorization header or invalid format for request to {}: Authorization header: {}",
+                    request.getRequestURI(), authorizationHeader);
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            logger.info("Loaded user details for username: {}, authorities: {}", username, userDetails.getAuthorities());
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     userDetails, null, userDetails.getAuthorities());
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            logger.info("Set authentication for user: {}", username);
+        } else if (username == null && authorizationHeader != null) {
+            logger.warn("Failed to authenticate user for request to {}. Username could not be extracted from JWT.",
+                    request.getRequestURI());
         }
+
         chain.doFilter(request, response);
     }
 }

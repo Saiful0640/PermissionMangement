@@ -6,7 +6,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatSortModule } from '@angular/material/sort';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule, MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogModule, MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -14,13 +14,15 @@ import { MatTableDataSource } from '@angular/material/table';
 import { MatSort } from '@angular/material/sort';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatIconModule } from '@angular/material/icon';
+import { Router } from '@angular/router';
 
 interface User {
   id: number;
   username: string;
-  email: string;
+  password: string;
   departmentId: number;
   designationId: number;
+  role: string;
   departmentName?: string;
   designationName?: string;
 }
@@ -55,7 +57,7 @@ interface Designation {
   styleUrls: ['./user-management.component.css']
 })
 export class UsersManagmentComponent implements OnInit {
-  displayedColumns: string[] = ['id', 'username', 'email', 'departmentName', 'designationName', 'actions'];
+  displayedColumns: string[] = ['id', 'username', 'departmentName', 'designationName', 'actions'];
   dataSource = new MatTableDataSource<User>([]);
   departments: Department[] = [];
   designations: Designation[] = [];
@@ -63,7 +65,7 @@ export class UsersManagmentComponent implements OnInit {
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  constructor(private http: HttpClient, public dialog: MatDialog) {}
+  constructor(private http: HttpClient, public dialog: MatDialog, private router: Router) {}
 
   ngOnInit(): void {
     this.fetchUsers();
@@ -85,6 +87,9 @@ export class UsersManagmentComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to load departments:', err);
+        if (err.status === 403) {
+          this.logoutAndRedirect();
+        }
       }
     });
   }
@@ -101,6 +106,9 @@ export class UsersManagmentComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to load designations:', err);
+        if (err.status === 403) {
+          this.logoutAndRedirect();
+        }
       }
     });
   }
@@ -121,6 +129,9 @@ export class UsersManagmentComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error fetching users:', err);
+        if (err.status === 403) {
+          this.logoutAndRedirect();
+        }
       }
     });
   }
@@ -133,7 +144,7 @@ export class UsersManagmentComponent implements OnInit {
   openAddDialog(): void {
     const dialogRef = this.dialog.open(UserDialogComponent, {
       width: '400px',
-      data: { user: { username: '', email: '', departmentId: null, designationId: null } }
+      data: { user: { username: '', password: '', departmentId: null, designationId: null } }
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -146,7 +157,7 @@ export class UsersManagmentComponent implements OnInit {
   openEditDialog(user: User): void {
     const dialogRef = this.dialog.open(UserDialogComponent, {
       width: '400px',
-      data: { user: { ...user } }
+      data: { user: { ...user, password: '' } }
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -158,6 +169,8 @@ export class UsersManagmentComponent implements OnInit {
 
   addUser(user: User): void {
     const token = localStorage.getItem('token');
+    console.log('Token being sent:', token);
+    console.log('User data being sent:', user);
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
@@ -171,12 +184,17 @@ export class UsersManagmentComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error adding user:', err);
+          if (err.status === 403) {
+            this.logoutAndRedirect();
+          }
         }
       });
   }
 
   updateUser(user: User): void {
     const token = localStorage.getItem('token');
+    console.log('Token being sent for Update:',token);
+    console.log('User data being sent for update:', user); 
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
@@ -194,6 +212,9 @@ export class UsersManagmentComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error updating user:', err);
+          if (err.status === 403) {
+            this.logoutAndRedirect();
+          }
         }
       });
   }
@@ -213,8 +234,17 @@ export class UsersManagmentComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error deleting user:', err);
+          if (err.status === 403) {
+            this.logoutAndRedirect();
+          }
         }
       });
+  }
+
+  logoutAndRedirect(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    this.router.navigate(['/login']);
   }
 }
 
@@ -237,9 +267,13 @@ export class UsersManagmentComponent implements OnInit {
         <mat-label>Username</mat-label>
         <input matInput [(ngModel)]="data.user.username" required>
       </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Email</mat-label>
-        <input matInput [(ngModel)]="data.user.email" required>
+      <mat-form-field appearance="fill" *ngIf="!data.user.id">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" [(ngModel)]="data.user.password" required>
+      </mat-form-field>
+      <mat-form-field appearance="fill" *ngIf="data.user.id">
+        <mat-label>New Password (optional)</mat-label>
+        <input matInput type="password" [(ngModel)]="data.user.password">
       </mat-form-field>
       <mat-form-field appearance="fill">
         <mat-label>Department</mat-label>
@@ -253,10 +287,18 @@ export class UsersManagmentComponent implements OnInit {
           <mat-option *ngFor="let des of designations" [value]="des.id">{{ des.name }}</mat-option>
         </mat-select>
       </mat-form-field>
+      
+      <mat-form-field appearance="fill">
+       <mat-label>Role</mat-label>
+         <mat-select [(ngModel)]="data.user.role" required>
+         <mat-option value="USER">User</mat-option>
+         <mat-option value="ADMIN">Admin</mat-option>
+       </mat-select>
+      </mat-form-field>
     </div>
     <div mat-dialog-actions>
       <button mat-button (click)="onCancel()">Cancel</button>
-      <button mat-button [mat-dialog-close]="data.user" [disabled]="!data.user.username || !data.user.email || !data.user.departmentId || !data.user.designationId">
+      <button mat-button [mat-dialog-close]="data.user" [disabled]="!isFormValid()">
         {{ data.user.id ? 'Update' : 'Add' }}
       </button>
     </div>
@@ -268,7 +310,8 @@ export class UserDialogComponent {
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: { user: User },
-    private http: HttpClient
+    private http: HttpClient,
+    private dialogRef: MatDialogRef<UserDialogComponent>
   ) {
     this.loadDepartments();
     this.loadDesignations();
@@ -306,7 +349,15 @@ export class UserDialogComponent {
     });
   }
 
+  isFormValid(): boolean {
+    if (this.data.user.id) {
+      return !!this.data.user.username && !!this.data.user.departmentId && !!this.data.user.designationId;
+    } else {
+      return !!this.data.user.username && !!this.data.user.password && !!this.data.user.departmentId && !!this.data.user.designationId;
+    }
+  }
+
   onCancel(): void {
-    this.data.user = null;
+    this.dialogRef.close(null);
   }
 }

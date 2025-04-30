@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
 @Entity
-
 public class Menu {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

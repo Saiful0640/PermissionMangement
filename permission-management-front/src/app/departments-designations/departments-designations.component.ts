@@ -6,7 +6,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatSortModule } from '@angular/material/sort';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatDialogModule, MatDialog,MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableDataSource } from '@angular/material/table';
@@ -43,7 +43,7 @@ interface Designation {
   templateUrl: './departments-designations.component.html',
   styleUrls: ['./departments-designations.component.css']
 })
-export class DepartmentsDesignationsComponent implements OnInit {
+export class DepartmentDesignationComponent implements OnInit {
   departmentColumns: string[] = ['id', 'name', 'actions'];
   designationColumns: string[] = ['id', 'name', 'actions'];
   departmentDataSource = new MatTableDataSource<Department>([]);
@@ -114,7 +114,7 @@ export class DepartmentsDesignationsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
+      if (result) { // result will be null if canceled, or a Department object if saved
         this.addDepartment(result);
       }
     });
@@ -127,7 +127,7 @@ export class DepartmentsDesignationsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
+      if (result) { // result will be null if canceled, or a Department object if saved
         this.updateDepartment(result);
       }
     });
@@ -140,7 +140,7 @@ export class DepartmentsDesignationsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
+      if (result) { // result will be null if canceled, or a Designation object if saved
         this.addDesignation(result);
       }
     });
@@ -153,7 +153,7 @@ export class DepartmentsDesignationsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
+      if (result) { // result will be null if canceled, or a Designation object if saved
         this.updateDesignation(result);
       }
     });
@@ -302,10 +302,13 @@ export class DepartmentsDesignationsComponent implements OnInit {
   `
 })
 export class DepartmentDialogComponent {
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { department: Department }) {}
+  constructor(
+    @Inject(MAT_DIALOG_DATA) public data: { department: Department },
+    private dialogRef: MatDialogRef<DepartmentDialogComponent>
+  ) {}
 
   onCancel(): void {
-    this.data.department = null;
+    this.dialogRef.close(null);
   }
 }
 
@@ -337,9 +340,12 @@ export class DepartmentDialogComponent {
   `
 })
 export class DesignationDialogComponent {
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { designation: Designation }) {}
+  constructor(
+    @Inject(MAT_DIALOG_DATA) public data: { designation: Designation },
+    private dialogRef: MatDialogRef<DesignationDialogComponent>
+  ) {}
 
   onCancel(): void {
-    this.data.designation = null;
+    this.dialogRef.close(null);
   }
 }

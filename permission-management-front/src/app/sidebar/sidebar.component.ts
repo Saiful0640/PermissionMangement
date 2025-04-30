@@ -1,70 +1,109 @@
 import { Component, OnInit,} from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
-import { RouterModule } from '@angular/router';
-import { isPlatformBrowser } from '@angular/common';
+import { RouterModule, Router } from '@angular/router';
 
-interface Menu {
+interface PermissionDTO {
+  id: number;
+  menuId: number;
   menuName: string | null;
   subMenu: string;
   link: string;
+  status: string;
   canView: boolean;
-}
-
-interface MenuGroup {
-  menuName: string | null;
-  items: Menu[];
-  subMenus: { link: string; subMenu: string }[];
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  departmentId: number;
+  designationId: number;
 }
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
   imports: [
-    CommonModule,
-    MatSidenavModule,
-    MatListModule,
-    RouterModule
+      CommonModule,
+      RouterModule,
+      MatListModule
   ],
-  templateUrl: './sidebar.component.html',
-  styleUrls: ['./sidebar.component.css']
+  template: `
+      <mat-nav-list>
+          <ng-container *ngFor="let permission of permissions">
+              <mat-list-item [routerLink]="permission.link" routerLinkActive="active" *ngIf="permission.menuName">
+                  {{ permission.menuName }}
+                  <mat-nav-list>
+                      <mat-list-item [routerLink]="permission.link" routerLinkActive="active">
+                          {{ permission.subMenu }}
+                      </mat-list-item>
+                  </mat-nav-list>
+              </mat-list-item>
+              <mat-list-item [routerLink]="permission.link" routerLinkActive="active" *ngIf="!permission.menuName">
+                  {{ permission.subMenu }}
+              </mat-list-item>
+          </ng-container>
+      </mat-nav-list>
+  `,
+  styles: [`
+      .active {
+          background-color: #e0e0e0;
+      }
+  `]
 })
 export class SidebarComponent implements OnInit {
-  menuGroups: MenuGroup[] = [];
+  permissions: PermissionDTO[] = [];
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
-  ngOnInit() {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    console.log('User data from localStorage:', user);
-    const url = `http://localhost:8080/api/permission?departmentId=${user.departmentId}&designationId=${user.designationId}`;
-    this.http.get<Menu[]>(url, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    }).subscribe({
-      next: (data) => {
-        console.log('Fetched permissions:', data);
-        const filteredMenus = data.filter(menu => menu.canView);
-        console.log('Filtered menus (canView: true):', filteredMenus);
-        
-        // Group menus by menuName
-        const grouped = filteredMenus.reduce((acc, menu) => {
-          const key = menu.menuName || 'top-level';
-          if (!acc[key]) acc[key] = [];
-          acc[key].push(menu);
-          return acc;
-        }, {} as { [key: string]: Menu[] });
+  ngOnInit(): void {
+      this.fetchPermissions();
+  }
 
-        // Convert grouped object to array of MenuGroup
-        this.menuGroups = Object.keys(grouped).map(key => ({
-          menuName: key === 'top-level' ? null : key,
-          items: grouped[key],
-          subMenus: grouped[key].map(menu => ({ link: menu.link, subMenu: menu.subMenu }))
-        }));
-        console.log('Menu groups:', this.menuGroups);
-      },
-      error: (err) => console.error('Error fetching menus:', err)
-    });
+  fetchPermissions(): void {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const departmentId = user.departmentId;
+      const designationId = user.designationId;
+      const token = localStorage.getItem('token');
+
+      console.log('User:', user);
+      console.log('Token:', token);
+      console.log('Fetching permissions for departmentId:', departmentId, 'designationId:', designationId);
+
+      if (!token) {
+          console.error('No token found in localStorage. Redirecting to login...');
+          this.router.navigate(['/login']);
+          return;
+      }
+
+      if (!departmentId || !designationId) {
+          console.error('DepartmentId or DesignationId missing in user data:', user);
+          this.router.navigate(['/login']);
+          return;
+      }
+
+      const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`
+      });
+
+      this.http.get<PermissionDTO[]>(`http://localhost:8080/api/permission?departmentId=${departmentId}&designationId=${designationId}`, { headers })
+          .subscribe({
+              next: (permissions) => {
+                  this.permissions = permissions.filter(p => p.canView); // Only show menus where canView is true
+                  console.log('Permissions fetched successfully:', this.permissions);
+              },
+              error: (err) => {
+                  console.error('Error fetching permissions:', err);
+                  if (err.status === 403) {
+                      console.error('403 Forbidden: Check if the token is valid and the user has permission to access this endpoint.');
+                      this.router.navigate(['/login']);
+                  }
+              }
+          });
+  }
+
+  logout(): void {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      this.router.navigate(['/login']);
   }
 }

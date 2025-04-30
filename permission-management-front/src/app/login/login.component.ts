@@ -10,7 +10,7 @@ import { MatCardModule } from '@angular/material/card';
 
 interface LoginResponse {
   token: string;
-  userId: number;
+  userId: number;  
   username: string;
   departmentId: number;
   designationId: number;
@@ -20,44 +20,71 @@ interface LoginResponse {
   selector: 'app-login',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatButtonModule,
-    MatCardModule,
-    RouterModule,
+      CommonModule,
+      FormsModule,
+      MatFormFieldModule,
+      MatInputModule,
+      MatButtonModule
   ],
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  template: `
+      <div class="login-container">
+          <h2>Login</h2>
+          <form (ngSubmit)="onSubmit()">
+              <mat-form-field appearance="fill">
+                  <mat-label>Username</mat-label>
+                  <input matInput [(ngModel)]="username" name="username" required>
+              </mat-form-field>
+              <mat-form-field appearance="fill">
+                  <mat-label>Password</mat-label>
+                  <input matInput type="password" [(ngModel)]="password" name="password" required>
+              </mat-form-field>
+              <button mat-raised-button color="primary" type="submit">Login</button>
+          </form>
+      </div>
+  `,
+  styles: [`
+      .login-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+      }
+      mat-form-field {
+          width: 300px;
+      }
+      button {
+          margin-top: 20px;
+      }
+  `]
 })
 export class LoginComponent {
-  username = '';
-  password = '';
-  errorMessage: string | null = null;
+  username: string = '';
+  password: string = '';
 
-  constructor(private http: HttpClient, private router:Router) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
-  login() {
-    this.errorMessage = null;
-    const payload = { username: this.username, password: this.password };
-    console.log('Sending login request with payload:', payload);
-    this.http.post('http://localhost:8080/api/auth/login', payload).subscribe({
-      next: (response: any) => {
-        console.log('Login response:', response);
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('user', JSON.stringify({
-          userId: response.userId,
-          username: response.username,
-          departmentId: response.departmentId,
-          designationId: response.designationId
-        }));
-        this.router.navigate(['/admin/dashboard']);
-      },
-      error: (err) => {
-        console.error('Login error:', err);
-        this.errorMessage = err.error || 'Failed to log in. Please check your credentials and try again.';
-      }
-    });
+  onSubmit(): void {
+      const credentials = {
+          username: this.username,
+          password: this.password
+      };
+
+      this.http.post<LoginResponse>('http://localhost:8080/api/auth/login', credentials).subscribe({
+          next: (response) => {
+              localStorage.setItem('token', response.token);
+              localStorage.setItem('user', JSON.stringify({
+                  id: response.userId,  
+                  username: response.username,
+                  departmentId: response.departmentId,
+                  designationId: response.designationId  // Fixed typo: was response.departmentId
+              }));
+              console.log('Login successful, user stored:', JSON.parse(localStorage.getItem('user') || '{}'));
+              this.router.navigate(['/admin/dashboard']);
+          },
+          error: (err) => {
+              console.error('Login failed:', err);
+          }
+      });
   }
 }

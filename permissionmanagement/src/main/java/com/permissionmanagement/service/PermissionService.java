@@ -1,6 +1,7 @@
 package com.permissionmanagement.service;
 
 import com.permissionmanagement.DTO.PermissionDTO;
+import com.permissionmanagement.Model.Menu;
 import com.permissionmanagement.repository.DepartmentRepository;
 import com.permissionmanagement.repository.DesignationRepository;
 import com.permissionmanagement.repository.MenuRepository;
@@ -68,4 +69,6 @@ public class PermissionService implements PermissionIService {
         permission.setCanDelete(dto.isCanDelete());
         return permissionRepository.save(permission);
     }
+
+
 }

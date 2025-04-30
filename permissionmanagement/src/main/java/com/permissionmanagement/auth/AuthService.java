@@ -3,7 +3,6 @@ package com.permissionmanagement.auth;
 import com.permissionmanagement.Model.User;
 import com.permissionmanagement.repository.UserRepository;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +11,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -20,6 +18,51 @@ import java.security.Key;
 import java.util.Date;
 
 @Service
+public class AuthService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
+    private static final String SECRET_KEY = "your-very-secure-and-long-secret-key-for-jwt-signing-1234567890abcdef";
+    private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 10; // 10 hours
+
+    private final AuthenticationManager authenticationManager;
+    private final UserRepository userRepository;
+    private final Key jwtSecret;
+
+    @Autowired
+    public AuthService(AuthenticationManager authenticationManager, UserRepository userRepository) {
+        this.authenticationManager = authenticationManager;
+        this.userRepository = userRepository;
+        this.jwtSecret = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public LoginResponse authenticate(LoginRequest request) throws AuthenticationException {
+        logger.info("Authenticating user: {}", request.getUsername());
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+        );
+
+        User user = userRepository.findByUsername(request.getUsername());
+        if (user == null) {
+            logger.error("User not found: {}", request.getUsername());
+            throw new AuthenticationException("User not found") {};
+        }
+
+        String token = Jwts.builder()
+                .setSubject(user.getUsername())
+                .claim("role",user.getRole())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .signWith(jwtSecret)
+                .compact();
+
+        logger.info("Generated JWT token for user {}: {}", user.getUsername(), token);
+        return new LoginResponse(token, user.getId(), user.getUsername(),
+                user.getDepartment() != null ? user.getDepartment().getId() : null,
+                user.getDesignation() != null ? user.getDesignation().getId() : null);
+    }
+}
+//old 2
+/*@Service
 public class AuthService {
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
     private static final String SECRET_KEY = "your-very-secure-and-long-secret-key-for-jwt-signing-1234567890abcdef"; // 72 characters (576 bits)
@@ -69,7 +112,7 @@ public class AuthService {
             logger.error("Unexpected error during authentication for user {}: {}", request.getUsername(), e.getMessage());
             throw e;
         }
-    }
+    }*/
 
     //old code
     /*private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
@@ -116,4 +159,3 @@ public class AuthService {
             throw e;
         }
     }*/
-}
