@@ -14,9 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -97,10 +99,17 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
-        logger.info("Creating user: {}", user.getUsername());
+    public ResponseEntity<User> createUser(@Valid @RequestBody User user, Principal principal) {
+        logger.info("Attempting to create user: {}, authenticated user: {}", user.getUsername(), principal != null ? principal.getName() : "null");
+        if (principal == null) {
+            logger.error("No authenticated principal found");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        logger.info("Authenticated authorities: {}", SecurityContextHolder.getContext().getAuthentication().getAuthorities());
 
         // Fetch Department and Designation based on IDs
         if (user.getDepartmentId() != null) {
@@ -120,6 +129,7 @@ public class UserController {
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRole("ROLE_" + user.getRole());
         User savedUser = userRepository.save(user);
         logger.info("User created with ID: {}", savedUser.getId());
         return ResponseEntity.ok(savedUser);
