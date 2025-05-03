@@ -8,6 +8,7 @@ import com.permissionmanagement.repository.DesignationRepository;
 import com.permissionmanagement.repository.UserRepository;
 import com.permissionmanagement.service.UserService;
 import jakarta.validation.Valid;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,9 +96,57 @@ public class UserController {
     public ResponseEntity<List<User>> getAllUsers() {
         logger.info("Fetching all users");
         List<User> users = userRepository.findAll();
+        // Set departmentId and designationId for each user
+        users.forEach(user -> {
+            if (user.getDepartment() != null) {
+                Hibernate.initialize(user.getDepartment());
+                user.setDepartmentId(user.getDepartment().getId());
+            }
+            if (user.getDesignation() != null) {
+                Hibernate.initialize(user.getDesignation());
+                user.setDesignationId(user.getDesignation().getId());
+            }
+        });
         logger.info("Returning {} users", users.size());
         return ResponseEntity.ok(users);
     }
+
+//working post one
+    /*@PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<User> createUser(@Valid @RequestBody User user, Principal principal) {
+        logger.info("Attempting to create user: {}, authenticated user: {}", user.getUsername(), principal != null ? principal.getName() : "null");
+        if (principal == null) {
+            logger.error("No authenticated principal found");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        logger.info("Authenticated authorities: {}", SecurityContextHolder.getContext().getAuthentication().getAuthorities());
+
+        // Fetch Department and Designation based on IDs
+        if (user.getDepartmentId() != null) {
+            Department department = departmentRepository.findById(user.getDepartmentId())
+                    .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + user.getDepartmentId()));
+            user.setDepartment(department);
+        } else {
+            throw new IllegalArgumentException("Department ID must not be null");
+        }
+
+        if (user.getDesignationId() != null) {
+            Designation designation = designationRepository.findById(user.getDesignationId())
+                    .orElseThrow(() -> new IllegalArgumentException("Designation not found with ID: " + user.getDesignationId()));
+            user.setDesignation(designation);
+        } else {
+            throw new IllegalArgumentException("Designation ID must not be null");
+        }
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRole("ROLE_" + user.getRole());
+        User savedUser = userRepository.save(user);
+        logger.info("User created with ID: {}", savedUser.getId());
+        return ResponseEntity.ok(savedUser);
+    }
+*/
 
 
     @PostMapping
@@ -131,6 +180,9 @@ public class UserController {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole("ROLE_" + user.getRole());
         User savedUser = userRepository.save(user);
+        // Set departmentId and designationId in the response
+        savedUser.setDepartmentId(savedUser.getDepartment().getId());
+        savedUser.setDesignationId(savedUser.getDesignation().getId());
         logger.info("User created with ID: {}", savedUser.getId());
         return ResponseEntity.ok(savedUser);
     }

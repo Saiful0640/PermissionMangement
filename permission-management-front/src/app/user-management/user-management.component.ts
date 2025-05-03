@@ -68,47 +68,27 @@ export class UsersManagmentComponent implements OnInit {
   constructor(private http: HttpClient, public dialog: MatDialog, private router: Router) {}
 
   ngOnInit(): void {
-    this.fetchUsers();
-    this.loadDepartments();
-    this.loadDesignations();
-    this.dataSource.sort = this.sort;
-    this.dataSource.paginator = this.paginator;
+    this.loadDepartmentsAndDesignations();
   }
 
-  loadDepartments() {
+  loadDepartmentsAndDesignations(): void {
     const token = localStorage.getItem('token');
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
 
-    this.http.get<Department[]>('http://localhost:8080/api/department', { headers }).subscribe({
-      next: (data) => {
-        this.departments = data;
-      },
-      error: (err) => {
-        console.error('Failed to load departments:', err);
-        if (err.status === 403) {
-          this.logoutAndRedirect();
-        }
-      }
-    });
-  }
-
-  loadDesignations() {
-    const token = localStorage.getItem('token');
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-
-    this.http.get<Designation[]>('http://localhost:8080/api/designation', { headers }).subscribe({
-      next: (data) => {
-        this.designations = data;
-      },
-      error: (err) => {
-        console.error('Failed to load designations:', err);
-        if (err.status === 403) {
-          this.logoutAndRedirect();
-        }
+    // Load departments and designations in parallel
+    Promise.all([
+      this.http.get<Department[]>('http://localhost:8080/api/department', { headers }).toPromise(),
+      this.http.get<Designation[]>('http://localhost:8080/api/designation', { headers }).toPromise()
+    ]).then(([departments, designations]) => {
+      this.departments = departments || [];
+      this.designations = designations || [];
+      this.fetchUsers();
+    }).catch(err => {
+      console.error('Error loading departments or designations:', err);
+      if (err.status === 403) {
+        this.logoutAndRedirect();
       }
     });
   }
@@ -124,8 +104,11 @@ export class UsersManagmentComponent implements OnInit {
         this.dataSource.data = users.map(user => ({
           ...user,
           departmentName: this.departments.find(d => d.id === user.departmentId)?.name || 'Unknown',
-          designationName: this.designations.find(d => d.id === user.designationId)?.name || 'Unknown'
+          designationName: this.designations.find(d => d.id === user.designationId)?.name || 'Unknown',
+          role: user.role.startsWith('ROLE_') ? user.role.substring(5) : user.role
         }));
+        this.dataSource.sort = this.sort;
+        this.dataSource.paginator = this.paginator;
       },
       error: (err) => {
         console.error('Error fetching users:', err);
@@ -144,7 +127,7 @@ export class UsersManagmentComponent implements OnInit {
   openAddDialog(): void {
     const dialogRef = this.dialog.open(UserDialogComponent, {
       width: '400px',
-      data: { user: { username: '', password: '', departmentId: null, designationId: null } }
+      data: { user: { username: '', password: '', departmentId: null, designationId: null, role: 'USER' } }
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -170,6 +153,7 @@ export class UsersManagmentComponent implements OnInit {
   addUser(user: User): void {
     const token = localStorage.getItem('token');
     console.log('Token being sent:', token);
+    user.role = 'ROLE_' + user.role;
     console.log('User data being sent:', user);
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
@@ -180,6 +164,7 @@ export class UsersManagmentComponent implements OnInit {
         next: (newUser) => {
           newUser.departmentName = this.departments.find(d => d.id === newUser.departmentId)?.name || 'Unknown';
           newUser.designationName = this.designations.find(d => d.id === newUser.designationId)?.name || 'Unknown';
+          newUser.role = newUser.role.startsWith('ROLE_') ? newUser.role.substring(5) : newUser.role;
           this.dataSource.data = [...this.dataSource.data, newUser];
         },
         error: (err) => {
@@ -193,8 +178,9 @@ export class UsersManagmentComponent implements OnInit {
 
   updateUser(user: User): void {
     const token = localStorage.getItem('token');
-    console.log('Token being sent for Update:',token);
-    console.log('User data being sent for update:', user); 
+    console.log('Token being sent for Update:', token);
+    user.role = 'ROLE_' + user.role;
+    console.log('User data being sent for update:', user);
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
@@ -204,6 +190,7 @@ export class UsersManagmentComponent implements OnInit {
         next: (updatedUser) => {
           updatedUser.departmentName = this.departments.find(d => d.id === updatedUser.departmentId)?.name || 'Unknown';
           updatedUser.designationName = this.designations.find(d => d.id === updatedUser.designationId)?.name || 'Unknown';
+          updatedUser.role = updatedUser.role.startsWith('ROLE_') ? updatedUser.role.substring(5) : updatedUser.role;
           const index = this.dataSource.data.findIndex(u => u.id === updatedUser.id);
           if (index !== -1) {
             this.dataSource.data[index] = updatedUser;
@@ -287,13 +274,12 @@ export class UsersManagmentComponent implements OnInit {
           <mat-option *ngFor="let des of designations" [value]="des.id">{{ des.name }}</mat-option>
         </mat-select>
       </mat-form-field>
-      
       <mat-form-field appearance="fill">
-       <mat-label>Role</mat-label>
-         <mat-select [(ngModel)]="data.user.role" required>
-         <mat-option value="USER">User</mat-option>
-         <mat-option value="ADMIN">Admin</mat-option>
-       </mat-select>
+        <mat-label>Role</mat-label>
+        <mat-select [(ngModel)]="data.user.role" required>
+          <mat-option value="USER">User</mat-option>
+          <mat-option value="ADMIN">Admin</mat-option>
+        </mat-select>
       </mat-form-field>
     </div>
     <div mat-dialog-actions>
@@ -313,47 +299,31 @@ export class UserDialogComponent {
     private http: HttpClient,
     private dialogRef: MatDialogRef<UserDialogComponent>
   ) {
-    this.loadDepartments();
-    this.loadDesignations();
+    this.loadDepartmentsAndDesignations();
   }
 
-  loadDepartments() {
+  loadDepartmentsAndDesignations(): void {
     const token = localStorage.getItem('token');
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
 
-    this.http.get<Department[]>('http://localhost:8080/api/department', { headers }).subscribe({
-      next: (data) => {
-        this.departments = data;
-      },
-      error: (err) => {
-        console.error('Failed to load departments:', err);
-      }
-    });
-  }
-
-  loadDesignations() {
-    const token = localStorage.getItem('token');
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-
-    this.http.get<Designation[]>('http://localhost:8080/api/designation', { headers }).subscribe({
-      next: (data) => {
-        this.designations = data;
-      },
-      error: (err) => {
-        console.error('Failed to load designations:', err);
-      }
+    Promise.all([
+      this.http.get<Department[]>('http://localhost:8080/api/department', { headers }).toPromise(),
+      this.http.get<Designation[]>('http://localhost:8080/api/designation', { headers }).toPromise()
+    ]).then(([departments, designations]) => {
+      this.departments = departments || [];
+      this.designations = designations || [];
+    }).catch(err => {
+      console.error('Error loading departments or designations:', err);
     });
   }
 
   isFormValid(): boolean {
     if (this.data.user.id) {
-      return !!this.data.user.username && !!this.data.user.departmentId && !!this.data.user.designationId;
+      return !!this.data.user.username && !!this.data.user.departmentId && !!this.data.user.designationId && !!this.data.user.role;
     } else {
-      return !!this.data.user.username && !!this.data.user.password && !!this.data.user.departmentId && !!this.data.user.designationId;
+      return !!this.data.user.username && !!this.data.user.password && !!this.data.user.departmentId && !!this.data.user.designationId && !!this.data.user.role;
     }
   }
 

@@ -16,7 +16,7 @@ export const routes: Routes = [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'calendar', component: CalendarComponent },
       { path: 'attendance/time_history', component: TimeHistoryComponent },
-      { path: 'permissions', component: PermissionManagementComponent },
+      { path: 'permission', component: PermissionManagementComponent },
       {path:'user',component:UsersManagmentComponent},
       { path: 'department-designation', component: DepartmentDesignationComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
