@@ -30,6 +30,7 @@ class PermissionController {
     private PermissionRepository permissionRepository;
 
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<List<PermissionDTO>> getPermissions(
             @RequestParam Long departmentId,
             @RequestParam Long designationId) {
@@ -44,8 +45,8 @@ class PermissionController {
         }
     }
 
-
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Permission> updatePermission(@PathVariable Long id, @RequestBody PermissionDTO dto) {
         try {
             dto.setId(id);
@@ -56,12 +57,16 @@ class PermissionController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Permission> addPermission(@RequestBody Permission permission) {
         Permission savedPermission = permissionRepository.save(permission);
         return ResponseEntity.ok(savedPermission);
     }
+
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Void> deletePermission(@PathVariable Long id) {
         if (!permissionRepository.existsById(id)) {
             return ResponseEntity.notFound().build();

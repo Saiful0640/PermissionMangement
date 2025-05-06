@@ -6,7 +6,7 @@ public class PermissionDTO {
     private String menuName;
     private String subMenu;
     private String link;
-    private String status;
+    private boolean active;
     private boolean canView;
     private boolean canCreate;
     private boolean canEdit;
@@ -56,13 +56,6 @@ public class PermissionDTO {
         this.link = link;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
 
     public boolean isCanView() {
         return canView;
@@ -111,4 +104,13 @@ public class PermissionDTO {
     public void setDesignationId(Long designationId) {
         this.designationId = designationId;
     }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
 }
