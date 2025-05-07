@@ -37,6 +37,21 @@ interface Designation {
   name: string;
 }
 
+interface Permission {
+  id: number;
+  menuId: number;
+  menuName: string | null;
+  subMenu: string;
+  link: string;
+  active: boolean;
+  canView: boolean;
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  departmentId: number;
+  designationId: number;
+}
+
 @Component({
   selector: 'app-user-management',
   standalone: true,
@@ -53,14 +68,73 @@ interface Designation {
     MatSelectModule,
     MatIconModule
   ],
-  templateUrl: './user-management.component.html',
-  styleUrls: ['./user-management.component.css']
+  template: `
+    <div class="user-management-container">
+      <h2>User Management</h2>
+      <button mat-raised-button color="primary" (click)="openAddDialog()" *ngIf="permissions.canCreate">Add User</button>
+      <mat-form-field appearance="fill">
+        <mat-label>Filter</mat-label>
+        <input matInput (keyup)="applyFilter($event)" placeholder="Search users">
+      </mat-form-field>
+      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+          <td mat-cell *matCellDef="let user">{{ user.id }}</td>
+        </ng-container>
+        <ng-container matColumnDef="username">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Username</th>
+          <td mat-cell *matCellDef="let user">{{ user.username }}</td>
+        </ng-container>
+        <ng-container matColumnDef="departmentName">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Department</th>
+          <td mat-cell *matCellDef="let user">{{ user.departmentName }}</td>
+        </ng-container>
+        <ng-container matColumnDef="designationName">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Designation</th>
+          <td mat-cell *matCellDef="let user">{{ user.designationName }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let user">
+            <button mat-icon-button color="primary" (click)="openEditDialog(user)" *ngIf="permissions.canEdit">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="deleteUser(user)" *ngIf="permissions.canDelete">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+      <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+    </div>
+  `,
+  styles: [`
+    .user-management-container {
+      padding: 20px;
+    }
+    mat-form-field {
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+    }
+    button {
+      margin: 0 5px;
+    }
+  `]
 })
 export class UsersManagmentComponent implements OnInit {
   displayedColumns: string[] = ['id', 'username', 'departmentName', 'designationName', 'actions'];
   dataSource = new MatTableDataSource<User>([]);
   departments: Department[] = [];
   designations: Designation[] = [];
+  permissions: Permission = {
+    id: 0, menuId: 0, menuName: null, subMenu: "User", link: "", active: true,
+    canView: false, canCreate: false, canEdit: false, canDelete: false,
+    departmentId: 0, designationId: 0
+  };
 
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -69,6 +143,7 @@ export class UsersManagmentComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDepartmentsAndDesignations();
+    this.loadUserPermissions();
   }
 
   loadDepartmentsAndDesignations(): void {
@@ -77,7 +152,6 @@ export class UsersManagmentComponent implements OnInit {
       'Authorization': `Bearer ${token}`
     });
 
-    // Load departments and designations in parallel
     Promise.all([
       this.http.get<Department[]>('http://localhost:8080/api/department', { headers }).toPromise(),
       this.http.get<Designation[]>('http://localhost:8080/api/designation', { headers }).toPromise()
@@ -91,6 +165,27 @@ export class UsersManagmentComponent implements OnInit {
         this.logoutAndRedirect();
       }
     });
+  }
+
+  loadUserPermissions(): void {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const departmentId = user.departmentId;
+    const designationId = user.designationId;
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.get<Permission[]>(`http://localhost:8080/api/permission?departmentId=${departmentId}&designationId=${designationId}`, { headers })
+      .subscribe({
+        next: (permissions) => {
+          const userPermission = permissions.find(p => p.subMenu === "User") || this.permissions;
+          this.permissions = userPermission;
+        },
+        error: (err) => {
+          console.error('Error fetching user permissions:', err);
+        }
+      });
   }
 
   fetchUsers(): void {

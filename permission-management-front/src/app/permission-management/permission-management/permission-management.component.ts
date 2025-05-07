@@ -14,14 +14,13 @@ import { MatDialog, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/d
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 
-
 interface Permission {
   id: number;
   menuId: number;
   menuName: string | null;
   subMenu: string;
   link: string;
-  status: string;
+  active: boolean; // Changed from status (string) to active (boolean)
   canView: boolean;
   canCreate: boolean;
   canEdit: boolean;
@@ -51,14 +50,112 @@ interface Designation {
     MatInputModule,
     MatTableModule,
     MatCheckboxModule,
-    CommonModule,
+    MatSortModule,
+    MatPaginatorModule,
+    MatDialogModule,
     MatIconModule,
-    MatPaginator
+    MatFormFieldModule
   ],
-  templateUrl: './permission-management.component.html',
-  styleUrls: ['./permission-management.component.css']
+  template: `
+    <div class="permission-management-container">
+      <h2>Manage Permissions</h2>
+      <mat-form-field appearance="fill">
+        <mat-label>Select Department</mat-label>
+        <mat-select [(ngModel)]="selectedDepartmentId" (selectionChange)="fetchPermissions()">
+          <mat-option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Select Designation</mat-label>
+        <mat-select [(ngModel)]="selectedDesignationId" (selectionChange)="fetchPermissions()">
+          <mat-option *ngFor="let des of designations" [value]="des.id">{{ des.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button mat-raised-button color="primary" (click)="openAddDialog()">Add Permission</button>
+      <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+          <td mat-cell *matCellDef="let permission">{{ permission.id }}</td>
+        </ng-container>
+        <ng-container matColumnDef="menuName">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Parent Menu</th>
+          <td mat-cell *matCellDef="let permission">{{ permission.menuName || 'N/A' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="subMenu">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Sub Menu</th>
+          <td mat-cell *matCellDef="let permission">{{ permission.subMenu }}</td>
+        </ng-container>
+        <ng-container matColumnDef="link">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Link</th>
+          <td mat-cell *matCellDef="let permission">{{ permission.link }}</td>
+        </ng-container>
+        <ng-container matColumnDef="active">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Active</th>
+          <td mat-cell *matCellDef="let permission">
+            <mat-checkbox [(ngModel)]="permission.active" (change)="updatePermission(permission)"></mat-checkbox>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="canView">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Can View</th>
+          <td mat-cell *matCellDef="let permission">
+            <mat-checkbox [(ngModel)]="permission.canView" (change)="updatePermission(permission)"></mat-checkbox>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="canCreate">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Can Create</th>
+          <td mat-cell *matCellDef="let permission">
+            <mat-checkbox [(ngModel)]="permission.canCreate" (change)="updatePermission(permission)"></mat-checkbox>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="canEdit">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Can Edit</th>
+          <td mat-cell *matCellDef="let permission">
+            <mat-checkbox [(ngModel)]="permission.canEdit" (change)="updatePermission(permission)"></mat-checkbox>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="canDelete">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Can Delete</th>
+          <td mat-cell *matCellDef="let permission">
+            <mat-checkbox [(ngModel)]="permission.canDelete" (change)="updatePermission(permission)"></mat-checkbox>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let permission">
+            <button mat-icon-button color="primary" (click)="openEditDialog(permission)">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="deletePermission(permission)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+      <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+    </div>
+  `,
+  styles: [`
+    .permission-management-container {
+      padding: 20px;
+    }
+    mat-form-field {
+      margin-right: 20px;
+    }
+    button {
+      margin-bottom: 20px;
+    }
+    .error-message {
+      color: red;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+    }
+  `]
 })
-
 export class PermissionManagementComponent implements OnInit {
   permissions: Permission[] = [];
   departments: Department[] = [];
@@ -67,7 +164,7 @@ export class PermissionManagementComponent implements OnInit {
   selectedDesignationId: number | null = null;
   errorMessage: string | null = null;
   displayedColumns: string[] = [
-    'id', 'menuName', 'subMenu', 'link', 'status',
+    'id', 'menuName', 'subMenu', 'link', 'active',
     'canView', 'canCreate', 'canEdit', 'canDelete', 'actions'
   ];
   dataSource = new MatTableDataSource<Permission>([]);
@@ -161,7 +258,7 @@ export class PermissionManagementComponent implements OnInit {
           menuName: null,
           subMenu: '',
           link: '',
-          status: 'active',
+          active: true,
           canView: false,
           canCreate: false,
           canEdit: false,
@@ -264,8 +361,7 @@ export class PermissionManagementComponent implements OnInit {
     MatInputModule,
     MatButtonModule,
     MatCheckboxModule,
-    CommonModule,
-    MatIconModule,
+    MatIconModule
   ],
   template: `
     <h1 mat-dialog-title>{{ data.permission.id ? 'Edit Permission' : 'Add Permission' }}</h1>
@@ -282,11 +378,8 @@ export class PermissionManagementComponent implements OnInit {
         <mat-label>Link</mat-label>
         <input matInput [(ngModel)]="data.permission.link" required>
       </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Status</mat-label>
-        <input matInput [(ngModel)]="data.permission.status" required>
-      </mat-form-field>
       <div class="checkbox-group">
+        <mat-checkbox [(ngModel)]="data.permission.active">Active</mat-checkbox>
         <mat-checkbox [(ngModel)]="data.permission.canView">Can View</mat-checkbox>
         <mat-checkbox [(ngModel)]="data.permission.canCreate">Can Create</mat-checkbox>
         <mat-checkbox [(ngModel)]="data.permission.canEdit">Can Edit</mat-checkbox>
@@ -295,7 +388,7 @@ export class PermissionManagementComponent implements OnInit {
     </div>
     <div mat-dialog-actions>
       <button mat-button (click)="onCancel()">Cancel</button>
-      <button mat-button [mat-dialog-close]="data.permission" [disabled]="!data.permission.subMenu || !data.permission.link || !data.permission.status">
+      <button mat-button [mat-dialog-close]="data.permission" [disabled]="!data.permission.subMenu || !data.permission.link">
         {{ data.permission.id ? 'Update' : 'Add' }}
       </button>
     </div>

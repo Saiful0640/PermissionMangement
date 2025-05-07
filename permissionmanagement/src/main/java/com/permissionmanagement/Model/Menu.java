@@ -13,11 +13,11 @@ public class Menu {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name; // e.g., "Access Control" or "User"
+    private String menuName;
 
-    private String subMenu; // e.g., "User", "Permission" (null for parent menus)
+    private String subMenu;
 
-    private String link; // URL link for the menu item
+    private String link;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_menu_id")
@@ -35,14 +35,7 @@ public class Menu {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
+  
     public String getSubMenu() {
         return subMenu;
     }
@@ -73,5 +66,13 @@ public class Menu {
 
     public void setSubMenus(List<Menu> subMenus) {
         this.subMenus = subMenus;
+    }
+
+    public String getMenuName() {
+        return menuName;
+    }
+
+    public void setMenuName(String menuName) {
+        this.menuName = menuName;
     }
 }

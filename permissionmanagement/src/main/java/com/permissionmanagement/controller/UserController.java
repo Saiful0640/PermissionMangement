@@ -92,24 +92,7 @@ public class UserController {
         return ResponseEntity.ok().build();
     }*/
 
-    @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        logger.info("Fetching all users");
-        List<User> users = userRepository.findAll();
-        // Set departmentId and designationId for each user
-        users.forEach(user -> {
-            if (user.getDepartment() != null) {
-                Hibernate.initialize(user.getDepartment());
-                user.setDepartmentId(user.getDepartment().getId());
-            }
-            if (user.getDesignation() != null) {
-                Hibernate.initialize(user.getDesignation());
-                user.setDesignationId(user.getDesignation().getId());
-            }
-        });
-        logger.info("Returning {} users", users.size());
-        return ResponseEntity.ok(users);
-    }
+
 
 //working post one
     /*@PostMapping
@@ -148,7 +131,24 @@ public class UserController {
     }
 */
 
-
+    @GetMapping
+    public ResponseEntity<List<User>> getAllUsers() {
+        logger.info("Fetching all users");
+        List<User> users = userRepository.findAll();
+        // Set departmentId and designationId for each user
+        users.forEach(user -> {
+            if (user.getDepartment() != null) {
+                Hibernate.initialize(user.getDepartment());
+                user.setDepartmentId(user.getDepartment().getId());
+            }
+            if (user.getDesignation() != null) {
+                Hibernate.initialize(user.getDesignation());
+                user.setDesignationId(user.getDesignation().getId());
+            }
+        });
+        logger.info("Returning {} users", users.size());
+        return ResponseEntity.ok(users);
+    }
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> createUser(@Valid @RequestBody User user, Principal principal) {

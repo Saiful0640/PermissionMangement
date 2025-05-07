@@ -1,8 +1,11 @@
-import { Component, OnInit,} from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { MatListModule } from '@angular/material/list';
-import { RouterModule, Router } from '@angular/router';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { AuthService } from '../login/auth.service';
 
 interface PermissionDTO {
   id: number;
@@ -10,7 +13,7 @@ interface PermissionDTO {
   menuName: string | null;
   subMenu: string;
   link: string;
-  status: string;
+  active: boolean;
   canView: boolean;
   canCreate: boolean;
   canEdit: boolean;
@@ -25,20 +28,35 @@ interface PermissionDTO {
   imports: [
       CommonModule,
       RouterModule,
-      MatListModule
+      MatListModule,
+      MatExpansionModule
   ],
   template: `
       <mat-nav-list>
-          <ng-container *ngFor="let permission of permissions">
-              <mat-list-item [routerLink]="permission.link" routerLinkActive="active" *ngIf="permission.menuName">
-                  {{ permission.menuName }}
+          <!-- Group permissions by parent menu (menuName) -->
+          <ng-container *ngFor="let parentMenu of parentMenus">
+              <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                      <mat-panel-title>{{ parentMenu }}</mat-panel-title>
+                  </mat-expansion-panel-header>
                   <mat-nav-list>
-                      <mat-list-item [routerLink]="permission.link" routerLinkActive="active">
-                          {{ permission.subMenu }}
-                      </mat-list-item>
+                      <ng-container *ngFor="let permission of permissions">
+                          <mat-list-item
+                              *ngIf="permission.menuName === parentMenu && permission.subMenu"
+                              [routerLink]="permission.link"
+                              routerLinkActive="active">
+                              {{ permission.subMenu }}
+                          </mat-list-item>
+                      </ng-container>
                   </mat-nav-list>
-              </mat-list-item>
-              <mat-list-item [routerLink]="permission.link" routerLinkActive="active" *ngIf="!permission.menuName">
+              </mat-expansion-panel>
+          </ng-container>
+          <!-- Standalone menus without a parent menu -->
+          <ng-container *ngFor="let permission of permissions">
+              <mat-list-item
+                  *ngIf="!permission.menuName && permission.subMenu"
+                  [routerLink]="permission.link"
+                  routerLinkActive="active">
                   {{ permission.subMenu }}
               </mat-list-item>
           </ng-container>
@@ -48,62 +66,87 @@ interface PermissionDTO {
       .active {
           background-color: #e0e0e0;
       }
+      mat-expansion-panel {
+          margin-bottom: 8px;
+      }
+      mat-nav-list {
+          padding: 0;
+      }
   `]
 })
-export class SidebarComponent implements OnInit {
+export class SidebarComponent implements OnInit, OnDestroy {
   permissions: PermissionDTO[] = [];
+  parentMenus: string[] = [];
+  private userSubscription: Subscription | null = null;
+  private user: any = null;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router, private authService: AuthService) {}
 
   ngOnInit(): void {
-      this.fetchPermissions();
+    this.userSubscription = this.authService.user$.subscribe(user => {
+      this.user = user;
+      if (this.user) {
+        this.fetchPermissions();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.userSubscription) {
+      this.userSubscription.unsubscribe();
+    }
   }
 
   fetchPermissions(): void {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const departmentId = user.departmentId;
-      const designationId = user.designationId;
-      const token = localStorage.getItem('token');
+    const departmentId = this.user.departmentId;
+    const designationId = this.user.designationId;
+    const token = localStorage.getItem('token');
 
-      console.log('User:', user);
-      console.log('Token:', token);
-      console.log('Fetching permissions for departmentId:', departmentId, 'designationId:', designationId);
+    console.log('User:', this.user);
+    console.log('Token:', token);
+    console.log('Fetching permissions for departmentId:', departmentId, 'designationId:', designationId);
 
-      if (!token) {
-          console.error('No token found in localStorage. Redirecting to login...');
-          this.router.navigate(['/login']);
-          return;
-      }
+    if (!token) {
+      console.error('No token found in localStorage. Redirecting to login...');
+      this.router.navigate(['/login']);
+      return;
+    }
 
-      if (!departmentId || !designationId) {
-          console.error('DepartmentId or DesignationId missing in user data:', user);
-          this.router.navigate(['/login']);
-          return;
-      }
+    if (!departmentId || !designationId) {
+      console.error('DepartmentId or DesignationId missing in user data:', this.user);
+      this.router.navigate(['/login']);
+      return;
+    }
 
-      const headers = new HttpHeaders({
-          'Authorization': `Bearer ${token}`
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.get<PermissionDTO[]>(`http://localhost:8080/api/permission?departmentId=${departmentId}&designationId=${designationId}`, { headers })
+      .subscribe({
+        next: (permissions) => {
+          this.permissions = permissions.filter(p => p.canView && p.active);
+          this.parentMenus = [...new Set(permissions
+            .filter(p => p.menuName)
+            .map(p => p.menuName!))];
+          console.log('Permissions fetched successfully:', this.permissions);
+          console.log('Parent menus:', this.parentMenus);
+        },
+        error: (err) => {
+          console.error('Error fetching permissions:', err);
+          if (err.status === 403) {
+            console.error('403 Forbidden: Token might be expired. Attempting to refresh by redirecting to login...');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            this.authService.logout();
+            this.router.navigate(['/login']);
+          }
+        }
       });
-
-      this.http.get<PermissionDTO[]>(`http://localhost:8080/api/permission?departmentId=${departmentId}&designationId=${designationId}`, { headers })
-          .subscribe({
-              next: (permissions) => {
-                  this.permissions = permissions.filter(p => p.canView); // Only show menus where canView is true
-                  console.log('Permissions fetched successfully:', this.permissions);
-              },
-              error: (err) => {
-                  console.error('Error fetching permissions:', err);
-                  if (err.status === 403) {
-                      console.error('403 Forbidden: Check if the token is valid and the user has permission to access this endpoint.');
-                      this.router.navigate(['/login']);
-                  }
-              }
-          });
   }
 
   logout(): void {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      this.router.navigate(['/login']);
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }

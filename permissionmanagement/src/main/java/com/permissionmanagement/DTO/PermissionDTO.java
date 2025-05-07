@@ -15,7 +15,6 @@ public class PermissionDTO {
     private Long designationId;
 
     // Getters and Setters
-
     public Long getId() {
         return id;
     }
@@ -56,6 +55,13 @@ public class PermissionDTO {
         this.link = link;
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 
     public boolean isCanView() {
         return canView;
@@ -103,14 +109,6 @@ public class PermissionDTO {
 
     public void setDesignationId(Long designationId) {
         this.designationId = designationId;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
     }
 
 }

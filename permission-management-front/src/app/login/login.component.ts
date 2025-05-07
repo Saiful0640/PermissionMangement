@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
+import { AuthService } from './auth.service';
+
 
 interface LoginResponse {
   token: string;
@@ -62,7 +62,7 @@ export class LoginComponent {
   username: string = '';
   password: string = '';
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
   onSubmit(): void {
       const credentials = {
@@ -70,16 +70,17 @@ export class LoginComponent {
           password: this.password
       };
 
-      this.http.post<LoginResponse>('http://localhost:8080/api/auth/login', credentials).subscribe({
+      this.authService.login(credentials).subscribe({
           next: (response) => {
-              localStorage.setItem('token', response.token);
-              localStorage.setItem('user', JSON.stringify({
+              this.authService.setToken(response.token);
+              const user = {
                   id: response.userId,  
                   username: response.username,
                   departmentId: response.departmentId,
-                  designationId: response.designationId  // Fixed typo: was response.departmentId
-              }));
-              console.log('Login successful, user stored:', JSON.parse(localStorage.getItem('user') || '{}'));
+                  designationId: response.designationId 
+              };
+              this.authService.setUser(user);
+              console.log('Login successful, user stored:', user);
               this.router.navigate(['/admin/dashboard']);
           },
           error: (err) => {

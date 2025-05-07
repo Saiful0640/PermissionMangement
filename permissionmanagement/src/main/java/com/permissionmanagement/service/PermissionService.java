@@ -35,33 +35,42 @@ public class PermissionService implements PermissionIService {
     public List<PermissionDTO> getPermissions(Long departmentId, Long designationId) {
         logger.info("Fetching permissions for departmentId: {}, designationId: {}", departmentId, designationId);
         List<Permission> permissions = permissionRepository.findByDepartmentIdAndDesignationId(departmentId, designationId);
+        logger.info("Raw permissions from repository: {}", permissions);
         List<PermissionDTO> dtos = new ArrayList<>();
 
         for (Permission p : permissions) {
-            if (!p.isActive()) continue; // Skip inactive permissions
+            if (!p.isActive()) continue;
 
             PermissionDTO dto = new PermissionDTO();
             dto.setId(p.getId());
-            dto.setMenuId(p.getMenu().getId());
+            dto.setDepartmentId(p.getDepartment() != null ? p.getDepartment().getId() : null);
+            dto.setDesignationId(p.getDesignation() != null ? p.getDesignation().getId() : null);
 
-            // Determine menuName and subMenu based on parent-child relationship
             Menu menu = p.getMenu();
-            if (menu.getParentMenu() != null) {
-                dto.setMenuName(menu.getParentMenu().getName()); // Parent menu name
-                dto.setSubMenu(menu.getName()); // Child menu name
+            if (menu != null) {
+                dto.setMenuId(menu.getId());
+                if (menu.getParentMenu() != null) {
+                    dto.setMenuName(menu.getParentMenu().getMenuName()); // Parent menu name
+                    dto.setSubMenu(menu.getMenuName()); // Current menu name as submenu
+                } else {
+                    dto.setMenuName(menu.getMenuName()); // Top-level menu name
+                    dto.setSubMenu(null); // No submenu for top-level menus
+                }
+                dto.setLink(menu.getLink());
             } else {
-                dto.setMenuName(menu.getName()); // Parent menu name
-                dto.setSubMenu(null); // No child menu
+                logger.warn("Menu is null for permission ID: {}", p.getId());
+                dto.setMenuId(null);
+                dto.setMenuName(null);
+                dto.setSubMenu(null);
+                dto.setLink(null);
             }
 
-            dto.setLink(menu.getLink());
             dto.setActive(p.isActive());
             dto.setCanView(p.isCanView());
             dto.setCanCreate(p.isCanCreate());
             dto.setCanEdit(p.isCanEdit());
             dto.setCanDelete(p.isCanDelete());
-            dto.setDepartmentId(p.getDepartment().getId());
-            dto.setDesignationId(p.getDesignation().getId());
+
             dtos.add(dto);
         }
 
