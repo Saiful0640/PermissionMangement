@@ -13,6 +13,8 @@ public class PermissionDTO {
     private boolean canDelete;
     private Long departmentId;
     private Long designationId;
+    private String role; // New field for role-based permissions
+    private Long userId; // New field for user-specific permissions
 
     // Getters and Setters
     public Long getId() {
@@ -111,4 +113,19 @@ public class PermissionDTO {
         this.designationId = designationId;
     }
 
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 }

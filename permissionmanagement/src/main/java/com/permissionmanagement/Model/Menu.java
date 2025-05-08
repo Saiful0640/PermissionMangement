@@ -1,9 +1,12 @@
 package com.permissionmanagement.Model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;
+
 
 @Entity
 @Table(name = "menu")
@@ -19,11 +22,13 @@ public class Menu {
 
     private String link;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_menu_id")
+    @JsonBackReference // Prevent infinite recursion on the parent side
     private Menu parentMenu;
 
-    @OneToMany(mappedBy = "parentMenu", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "parentMenu", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference // Manage serialization of the child side
     private List<Menu> subMenus;
 
     // Getters and Setters
@@ -35,7 +40,6 @@ public class Menu {
         this.id = id;
     }
 
-  
     public String getSubMenu() {
         return subMenu;
     }

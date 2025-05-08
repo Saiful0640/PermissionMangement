@@ -45,16 +45,18 @@ public class PermissionService implements PermissionIService {
             dto.setId(p.getId());
             dto.setDepartmentId(p.getDepartment() != null ? p.getDepartment().getId() : null);
             dto.setDesignationId(p.getDesignation() != null ? p.getDesignation().getId() : null);
+            dto.setRole(p.getRole());
+            dto.setUserId(p.getUserId());
 
             Menu menu = p.getMenu();
             if (menu != null) {
                 dto.setMenuId(menu.getId());
                 if (menu.getParentMenu() != null) {
-                    dto.setMenuName(menu.getParentMenu().getMenuName()); // Parent menu name
-                    dto.setSubMenu(menu.getMenuName()); // Current menu name as submenu
+                    dto.setMenuName(menu.getParentMenu().getMenuName());
+                    dto.setSubMenu(menu.getMenuName());
                 } else {
-                    dto.setMenuName(menu.getMenuName()); // Top-level menu name
-                    dto.setSubMenu(null); // No submenu for top-level menus
+                    dto.setMenuName(menu.getMenuName());
+                    dto.setSubMenu(null);
                 }
                 dto.setLink(menu.getLink());
             } else {
@@ -85,8 +87,10 @@ public class PermissionService implements PermissionIService {
                 : new Permission();
 
         permission.setMenu(menuRepository.findById(dto.getMenuId()).orElseThrow(() -> new ResourceNotFoundException("Menu not found with id: " + dto.getMenuId())));
-        permission.setDepartment(departmentRepository.findById(dto.getDepartmentId()).orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + dto.getDepartmentId())));
-        permission.setDesignation(designationRepository.findById(dto.getDesignationId()).orElseThrow(() -> new ResourceNotFoundException("Designation not found with id: " + dto.getDesignationId())));
+        permission.setDepartment(dto.getDepartmentId() != null ? departmentRepository.findById(dto.getDepartmentId()).orElse(null) : null);
+        permission.setDesignation(dto.getDesignationId() != null ? designationRepository.findById(dto.getDesignationId()).orElse(null) : null);
+        permission.setRole(dto.getRole());
+        permission.setUserId(dto.getUserId());
         permission.setActive(dto.isActive());
         permission.setCanView(dto.isCanView());
         permission.setCanCreate(dto.isCanCreate());
