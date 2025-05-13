@@ -131,7 +131,7 @@ public class UserController {
     }
 */
 
-    @GetMapping
+  /*  @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
         logger.info("Fetching all users");
         List<User> users = userRepository.findAll();
@@ -148,6 +148,22 @@ public class UserController {
         });
         logger.info("Returning {} users", users.size());
         return ResponseEntity.ok(users);
+    }*/
+
+
+
+    @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<List<User>> getAllUsers() {
+        try {
+            logger.info("Fetching all users");
+            List<User> users = userRepository.findAll();
+            logger.info("Returning {} users", users.size());
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            logger.error("Error fetching users", e);
+            return ResponseEntity.status(500).build();
+        }
     }
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")

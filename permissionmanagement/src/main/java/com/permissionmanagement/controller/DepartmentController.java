@@ -3,8 +3,11 @@ package com.permissionmanagement.controller;
 import com.permissionmanagement.Model.Department;
 import com.permissionmanagement.repository.DepartmentRepository;
 import com.permissionmanagement.service.DepartmentService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,6 +16,8 @@ import java.util.List;
 @RequestMapping("/api/department")
 @CrossOrigin(origins = "http://localhost:4200")
 class DepartmentController {
+
+    private static final Logger logger = LoggerFactory.getLogger(DepartmentController.class);
     @Autowired
     private DepartmentService departmentService;
 
@@ -23,8 +28,17 @@ class DepartmentController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<List<Department>> getAllDepartments() {
-        return ResponseEntity.ok(departmentService.getAllDepartment());
+        try {
+            logger.info("Fetching all departments");
+            List<Department> departments = departmentRepository.findAll();
+            logger.info("Returning {} departments", departments.size());
+            return ResponseEntity.ok(departments);
+        } catch (Exception e) {
+            logger.error("Error fetching departments", e);
+            return ResponseEntity.status(500).build();
+        }
     }
 
     @PostMapping

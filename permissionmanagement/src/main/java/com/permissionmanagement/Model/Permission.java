@@ -25,12 +25,14 @@ public class Permission {
     @JoinColumn(name = "designation_id")
     private Designation designation;
 
-    private boolean active; // Replaces the status string with a boolean
-
+    private boolean active;
     private boolean canView;
     private boolean canCreate;
     private boolean canEdit;
     private boolean canDelete;
+
+    private String role; // New field for role
+    private Long userId; // New field for user
 
     // Getters and Setters
     public Long getId() {
@@ -103,5 +105,21 @@ public class Permission {
 
     public void setCanDelete(boolean canDelete) {
         this.canDelete = canDelete;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 }
