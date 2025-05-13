@@ -99,7 +99,7 @@ interface Menu {
   `]
 })
 export class SidebarComponent implements OnInit, OnDestroy {
-  @ViewChild('addPermissionButton') addPermissionButton!: ElementRef; // Use non-null assertion operator
+  @ViewChild('addPermissionButton') addPermissionButton!: ElementRef;
 
   permissions: PermissionDTO[] = [];
   parentMenus: string[] = [];
@@ -169,7 +169,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error('Error fetching permissions:', err.status, err.statusText, err.error);
           if (err.status === 403) {
-            console.error('403 Forbidden: Token might be expired. Attempting to refresh by redirecting to login...');
+            console.error('403 Forbidden: Token might be expired. Redirecting to login...');
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             this.authService.logout();
@@ -186,22 +186,15 @@ export class SidebarComponent implements OnInit, OnDestroy {
     });
 
     this.loadingMenus = true;
-    this.http.get('http://localhost:8080/api/menu', { headers, responseType: 'text' })
+    this.http.get<Menu[]>('http://localhost:8080/api/menu', { headers })
       .subscribe({
-        next: (response) => {
-          try {
-            const menus = JSON.parse(response) as Menu[];
-            this.menus = menus;
-            console.log('Menus fetched successfully:', this.menus);
-          } catch (e) {
-            console.error('Failed to parse menus JSON:', e, 'Raw response:', response);
-          } finally {
-            this.loadingMenus = false;
-          }
+        next: (menus) => {
+          this.menus = menus;
+          console.log('Menus fetched successfully:', this.menus);
         },
         error: (err) => {
           console.error('Error fetching menus:', err.status, err.statusText, err.error);
-          this.loadingMenus = false;
+          this.menus = []; // Ensure menus is empty on error
           if (err.status === 403) {
             console.error('403 Forbidden: Token might be expired. Redirecting to login...');
             localStorage.removeItem('token');
@@ -209,11 +202,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
             this.authService.logout();
             this.router.navigate(['/login']);
           }
+        },
+        complete: () => {
+          this.loadingMenus = false;
+          console.log('Menus fetch completed. Final menus:', this.menus);
         }
       });
   }
 
   openAddPermissionDialog(): void {
+    console.log('Opening dialog with menus:', this.menus);
     const dialogRef = this.dialog.open(AddPermissionDialogComponent, {
       width: '400px',
       data: { menus: this.menus }

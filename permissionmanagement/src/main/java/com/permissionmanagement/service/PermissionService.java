@@ -100,15 +100,6 @@ public class PermissionService implements PermissionIService {
         return permissionRepository.save(permission);
     }
 
-    public Permission savePermission(Permission permission) {
-        return permissionRepository.save(permission);
-    }
 
-    public boolean existsById(Long id) {
-        return permissionRepository.existsById(id);
-    }
 
-    public void deletePermission(Long id) {
-        permissionRepository.deleteById(id);
-    }
 }

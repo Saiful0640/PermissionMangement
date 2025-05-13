@@ -30,7 +30,7 @@ class PermissionController {
     private PermissionRepository permissionRepository;
 
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<List<PermissionDTO>> getPermissions(
             @RequestParam(required = false) Long departmentId,
             @RequestParam(required = false) Long designationId,
@@ -80,7 +80,7 @@ class PermissionController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<Permission> addPermission(@RequestBody PermissionDTO dto) {
         Permission savedPermission = permissionRepository.save(permissionService.savePermission(dto));
         return ResponseEntity.ok(savedPermission);
