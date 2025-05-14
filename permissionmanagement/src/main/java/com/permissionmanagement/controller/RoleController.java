@@ -17,7 +17,7 @@ public class RoleController {
     private static final Logger logger = LoggerFactory.getLogger(RoleController.class);
 
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<List<String>> getAllRoles() {
         try {
             logger.info("Fetching all roles");

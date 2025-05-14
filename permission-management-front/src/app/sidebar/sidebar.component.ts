@@ -48,40 +48,46 @@ interface Menu {
   ],
   template: `
     <mat-nav-list>
-      <!-- Group permissions by parent menu (menuName) -->
-      <ng-container *ngFor="let parentMenu of parentMenus">
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>{{ parentMenu }}</mat-panel-title>
-          </mat-expansion-panel-header>
-          <mat-nav-list>
-            <ng-container *ngFor="let permission of permissions">
-              <mat-list-item
-                *ngIf="permission.menuName === parentMenu && permission.subMenu"
-                [routerLink]="permission.link"
-                routerLinkActive="active">
-                {{ permission.subMenu }}
-              </mat-list-item>
-            </ng-container>
-          </mat-nav-list>
-        </mat-expansion-panel>
-      </ng-container>
-      <!-- Standalone menus without a parent menu -->
-      <ng-container *ngFor="let permission of permissions">
-        <mat-list-item
-          *ngIf="!permission.menuName && permission.subMenu"
-          [routerLink]="permission.link"
-          routerLinkActive="active">
-          {{ permission.subMenu }}
-        </mat-list-item>
-      </ng-container>
-      <!-- Add Permission Button -->
-      <mat-list-item>
-        <button #addPermissionButton mat-raised-button color="primary" (click)="openAddPermissionDialog()" [disabled]="loadingMenus">
-          {{ loadingMenus ? 'Loading Menus...' : 'Add Permission' }}
-        </button>
-      </mat-list-item>
-    </mat-nav-list>
+  <!-- Group permissions by parent menu (menuName) -->
+  <ng-container *ngFor="let parentMenu of parentMenus">
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>{{ parentMenu }}</mat-panel-title>
+      </mat-expansion-panel-header>
+      <mat-nav-list>
+        <ng-container *ngFor="let permission of permissions">
+          <mat-list-item
+            *ngIf="permission.menuName === parentMenu && permission.subMenu"
+            [routerLink]="permission.link"
+            routerLinkActive="active">
+            {{ permission.subMenu }}
+          </mat-list-item>
+        </ng-container>
+      </mat-nav-list>
+    </mat-expansion-panel>
+  </ng-container>
+  <!-- Standalone menus without a parent menu -->
+  <ng-container *ngFor="let permission of permissions">
+    <mat-list-item
+      *ngIf="!permission.menuName && permission.subMenu"
+      [routerLink]="permission.link"
+      routerLinkActive="active">
+      {{ permission.subMenu }}
+    </mat-list-item>
+  </ng-container>
+  <!-- Add Permission Button -->
+  <mat-list-item>
+    <button #addPermissionButton mat-raised-button color="primary" (click)="openAddPermissionDialog()" [disabled]="loadingMenus">
+      {{ loadingMenus ? 'Loading Menus...' : 'Add Permission' }}
+    </button>
+  </mat-list-item>
+  <!-- Logout Button -->
+  <mat-list-item>
+    <button mat-raised-button color="warn" (click)="logout()">
+      Logout
+    </button>
+  </mat-list-item>
+</mat-nav-list>
   `,
   styles: [`
     .active {
@@ -227,8 +233,19 @@ export class SidebarComponent implements OnInit, OnDestroy {
     });
   }
 
+ 
   logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+    this.authService.logout().subscribe({
+      next: () => {
+        console.log('Logout successful');
+        this.router.navigate(['/login']);
+      },
+      error: (err) => {
+        console.error('Error during logout:', err);
+        // Even if the backend call fails, clear the local state and redirect
+        this.authService.clearUser();
+        this.router.navigate(['/login']);
+      }
+    });
   }
 }

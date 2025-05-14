@@ -28,7 +28,7 @@ class DepartmentController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<List<Department>> getAllDepartments() {
         try {
             logger.info("Fetching all departments");
@@ -42,11 +42,13 @@ class DepartmentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<Department> saveDepartment(@RequestBody Department department) {
         return ResponseEntity.ok(departmentService.SaveDepartment(department));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<Department> updateDepartment(@PathVariable Long id, @RequestBody Department department) {
         if (!departmentRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
@@ -57,6 +59,7 @@ class DepartmentController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<Void> deleteDepartment(@PathVariable Long id) {
         if (!departmentRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
