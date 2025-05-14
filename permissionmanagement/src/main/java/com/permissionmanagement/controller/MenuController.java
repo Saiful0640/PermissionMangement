@@ -23,7 +23,7 @@ public class MenuController {
     private MenuRepository menuRepository;
 
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<List<Menu>> getAllMenus() {
         try {
             logger.info("Fetching all menus");

@@ -153,7 +153,7 @@ public class UserController {
 
 
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<List<User>> getAllUsers() {
         try {
             logger.info("Fetching all users");
@@ -166,7 +166,7 @@ public class UserController {
         }
     }
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<User> createUser(@Valid @RequestBody User user, Principal principal) {
         logger.info("Attempting to create user: {}, authenticated user: {}", user.getUsername(), principal != null ? principal.getName() : "null");
         if (principal == null) {
@@ -204,7 +204,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody User user) {
         logger.info("Updating user with ID: {}", id);
         if (!userRepository.existsById(id)) {
@@ -242,7 +242,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         logger.info("Deleting user with ID: {}", id);
         if (!userRepository.existsById(id)) {

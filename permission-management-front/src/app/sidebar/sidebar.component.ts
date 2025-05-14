@@ -48,40 +48,46 @@ interface Menu {
   ],
   template: `
     <mat-nav-list>
-      <!-- Group permissions by parent menu (menuName) -->
-      <ng-container *ngFor="let parentMenu of parentMenus">
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>{{ parentMenu }}</mat-panel-title>
-          </mat-expansion-panel-header>
-          <mat-nav-list>
-            <ng-container *ngFor="let permission of permissions">
-              <mat-list-item
-                *ngIf="permission.menuName === parentMenu && permission.subMenu"
-                [routerLink]="permission.link"
-                routerLinkActive="active">
-                {{ permission.subMenu }}
-              </mat-list-item>
-            </ng-container>
-          </mat-nav-list>
-        </mat-expansion-panel>
-      </ng-container>
-      <!-- Standalone menus without a parent menu -->
-      <ng-container *ngFor="let permission of permissions">
-        <mat-list-item
-          *ngIf="!permission.menuName && permission.subMenu"
-          [routerLink]="permission.link"
-          routerLinkActive="active">
-          {{ permission.subMenu }}
-        </mat-list-item>
-      </ng-container>
-      <!-- Add Permission Button -->
-      <mat-list-item>
-        <button #addPermissionButton mat-raised-button color="primary" (click)="openAddPermissionDialog()" [disabled]="loadingMenus">
-          {{ loadingMenus ? 'Loading Menus...' : 'Add Permission' }}
-        </button>
-      </mat-list-item>
-    </mat-nav-list>
+  <!-- Group permissions by parent menu (menuName) -->
+  <ng-container *ngFor="let parentMenu of parentMenus">
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>{{ parentMenu }}</mat-panel-title>
+      </mat-expansion-panel-header>
+      <mat-nav-list>
+        <ng-container *ngFor="let permission of permissions">
+          <mat-list-item
+            *ngIf="permission.menuName === parentMenu && permission.subMenu"
+            [routerLink]="permission.link"
+            routerLinkActive="active">
+            {{ permission.subMenu }}
+          </mat-list-item>
+        </ng-container>
+      </mat-nav-list>
+    </mat-expansion-panel>
+  </ng-container>
+  <!-- Standalone menus without a parent menu -->
+  <ng-container *ngFor="let permission of permissions">
+    <mat-list-item
+      *ngIf="!permission.menuName && permission.subMenu"
+      [routerLink]="permission.link"
+      routerLinkActive="active">
+      {{ permission.subMenu }}
+    </mat-list-item>
+  </ng-container>
+  <!-- Add Permission Button -->
+  <mat-list-item>
+    <button #addPermissionButton mat-raised-button color="primary" (click)="openAddPermissionDialog()" [disabled]="loadingMenus">
+      {{ loadingMenus ? 'Loading Menus...' : 'Add Permission' }}
+    </button>
+  </mat-list-item>
+  <!-- Logout Button -->
+  <mat-list-item>
+    <button mat-raised-button color="warn" (click)="logout()">
+      Logout
+    </button>
+  </mat-list-item>
+</mat-nav-list>
   `,
   styles: [`
     .active {
@@ -99,7 +105,7 @@ interface Menu {
   `]
 })
 export class SidebarComponent implements OnInit, OnDestroy {
-  @ViewChild('addPermissionButton') addPermissionButton!: ElementRef; // Use non-null assertion operator
+  @ViewChild('addPermissionButton') addPermissionButton!: ElementRef;
 
   permissions: PermissionDTO[] = [];
   parentMenus: string[] = [];
@@ -169,7 +175,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error('Error fetching permissions:', err.status, err.statusText, err.error);
           if (err.status === 403) {
-            console.error('403 Forbidden: Token might be expired. Attempting to refresh by redirecting to login...');
+            console.error('403 Forbidden: Token might be expired. Redirecting to login...');
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             this.authService.logout();
@@ -186,22 +192,15 @@ export class SidebarComponent implements OnInit, OnDestroy {
     });
 
     this.loadingMenus = true;
-    this.http.get('http://localhost:8080/api/menu', { headers, responseType: 'text' })
+    this.http.get<Menu[]>('http://localhost:8080/api/menu', { headers })
       .subscribe({
-        next: (response) => {
-          try {
-            const menus = JSON.parse(response) as Menu[];
-            this.menus = menus;
-            console.log('Menus fetched successfully:', this.menus);
-          } catch (e) {
-            console.error('Failed to parse menus JSON:', e, 'Raw response:', response);
-          } finally {
-            this.loadingMenus = false;
-          }
+        next: (menus) => {
+          this.menus = menus;
+          console.log('Menus fetched successfully:', this.menus);
         },
         error: (err) => {
           console.error('Error fetching menus:', err.status, err.statusText, err.error);
-          this.loadingMenus = false;
+          this.menus = []; // Ensure menus is empty on error
           if (err.status === 403) {
             console.error('403 Forbidden: Token might be expired. Redirecting to login...');
             localStorage.removeItem('token');
@@ -209,11 +208,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
             this.authService.logout();
             this.router.navigate(['/login']);
           }
+        },
+        complete: () => {
+          this.loadingMenus = false;
+          console.log('Menus fetch completed. Final menus:', this.menus);
         }
       });
   }
 
   openAddPermissionDialog(): void {
+    console.log('Opening dialog with menus:', this.menus);
     const dialogRef = this.dialog.open(AddPermissionDialogComponent, {
       width: '400px',
       data: { menus: this.menus }
@@ -229,8 +233,19 @@ export class SidebarComponent implements OnInit, OnDestroy {
     });
   }
 
+ 
   logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+    this.authService.logout().subscribe({
+      next: () => {
+        console.log('Logout successful');
+        this.router.navigate(['/login']);
+      },
+      error: (err) => {
+        console.error('Error during logout:', err);
+        // Even if the backend call fails, clear the local state and redirect
+        this.authService.clearUser();
+        this.router.navigate(['/login']);
+      }
+    });
   }
 }

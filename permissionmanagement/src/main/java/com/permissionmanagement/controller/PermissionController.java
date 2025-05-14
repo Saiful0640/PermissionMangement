@@ -1,14 +1,11 @@
 package com.permissionmanagement.controller;
 
 import com.permissionmanagement.DTO.PermissionDTO;
-import com.permissionmanagement.Model.Menu;
 import com.permissionmanagement.repository.PermissionRepository;
 import com.permissionmanagement.service.PermissionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.permissionmanagement.Model.Permission;
-import com.permissionmanagement.service.Iservice.PermissionIService;
-import com.permissionmanagement.util.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +13,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Set;
-
 @RestController
 @RequestMapping("/api/permission")
 @CrossOrigin(origins = "http://localhost:4200")
@@ -30,7 +25,7 @@ class PermissionController {
     private PermissionRepository permissionRepository;
 
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<List<PermissionDTO>> getPermissions(
             @RequestParam(required = false) Long departmentId,
             @RequestParam(required = false) Long designationId,
@@ -80,7 +75,7 @@ class PermissionController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<Permission> addPermission(@RequestBody PermissionDTO dto) {
         Permission savedPermission = permissionRepository.save(permissionService.savePermission(dto));
         return ResponseEntity.ok(savedPermission);

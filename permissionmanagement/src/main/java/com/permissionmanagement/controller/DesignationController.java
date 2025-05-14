@@ -24,7 +24,7 @@ class DesignationController {
     private DesignationRepository designationRepository;
 
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<List<Designation>> getAllDesignations() {
         try {
             logger.info("Fetching all designations");
@@ -38,6 +38,7 @@ class DesignationController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<Designation> saveDesignation(@RequestBody Designation designation) {
         return ResponseEntity.ok(designationService.saveDesignation(designation));
     }
